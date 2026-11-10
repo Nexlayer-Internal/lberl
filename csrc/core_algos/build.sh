@@ -41,12 +41,32 @@ CXXFLAGS=(-std=c++17 -O2 -D_GLIBCXX_USE_CXX11_ABI=1
 
 "$CXX" "${CXXFLAGS[@]}" -c "$HERE/src/core_algos.cpp" -o "$BUILD_DIR/core_algos.o"
 "$CXX" "${CXXFLAGS[@]}" -c "$HERE/tests/validate_core_algos.cpp" -o "$BUILD_DIR/validate_core_algos.o"
+"$CXX" "${CXXFLAGS[@]}" -c "$HERE/tests/cuda_smoke_test.cpp" -o "$BUILD_DIR/cuda_smoke_test.o"
+
+# Link flags for an optional CUDA-enabled libtorch (ltorch_cuda/lc10_cuda).
+# Harmless to pass even against a CPU-only libtorch build IF those .so/.dylib
+# files simply don't exist there -- so only add them when present, rather
+# than unconditionally requiring a CUDA libtorch to build at all.
+EXTRA_LIBS=()
+for lib in torch_cuda c10_cuda; do
+  if ls "$TORCH_DIR"/lib/lib${lib}.* >/dev/null 2>&1; then
+    EXTRA_LIBS+=("-l${lib}")
+  fi
+done
 
 "$CXX" -std=c++17 -O2 \
   "$BUILD_DIR/core_algos.o" "$BUILD_DIR/validate_core_algos.o" \
   -o "$BUILD_DIR/validate_core_algos" \
-  -L"$TORCH_DIR/lib" -ltorch -ltorch_cpu -lc10 \
+  -L"$TORCH_DIR/lib" -ltorch -ltorch_cpu -lc10 "${EXTRA_LIBS[@]+"${EXTRA_LIBS[@]}"}" \
+  -Wl,-rpath,"$TORCH_DIR/lib"
+
+"$CXX" -std=c++17 -O2 \
+  "$BUILD_DIR/core_algos.o" "$BUILD_DIR/cuda_smoke_test.o" \
+  -o "$BUILD_DIR/cuda_smoke_test" \
+  -L"$TORCH_DIR/lib" -ltorch -ltorch_cpu -lc10 "${EXTRA_LIBS[@]+"${EXTRA_LIBS[@]}"}" \
   -Wl,-rpath,"$TORCH_DIR/lib"
 
 echo "Built: $BUILD_DIR/validate_core_algos"
 echo "Run:   $BUILD_DIR/validate_core_algos $HERE/tests/fixtures"
+echo "Built: $BUILD_DIR/cuda_smoke_test"
+echo "Run:   $BUILD_DIR/cuda_smoke_test   (exits 77/SKIP if no CUDA device is visible)"

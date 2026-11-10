@@ -66,7 +66,17 @@ GrpoAdvantageResult compute_grpo_outcome_advantage(const torch::Tensor& token_le
 
   std::unordered_map<int64_t, double> id2mean;
   std::unordered_map<int64_t, double> id2std;
-  auto scores_acc = scores.accessor<float, 1>();
+
+  // Tensor::accessor<T,N>() assumes host-dereferenceable memory; it is
+  // CPU-only and will segfault (silently corrupt, in the absence of a
+  // debugger) if `scores` lives on a CUDA device. The per-group mean/std
+  // loop below is inherently host-side bookkeeping (mirroring Python's
+  // defaultdict loop) regardless of where the caller's tensors live, so do
+  // it on an explicit CPU copy and move the result back to the original
+  // device before using it in any further tensor ops.
+  const torch::Device orig_device = scores.device();
+  torch::Tensor scores_cpu = scores.cpu().contiguous();
+  auto scores_acc = scores_cpu.accessor<float, 1>();
 
   for (const auto& kv : id2rows) {
     const int64_t group_id = kv.first;
@@ -103,6 +113,7 @@ GrpoAdvantageResult compute_grpo_outcome_advantage(const torch::Tensor& token_le
     }
   }
 
+  scores = scores_cpu.to(orig_device);
   torch::Tensor advantages = scores.unsqueeze(-1) * response_mask;
   return {advantages, advantages};
 }
