@@ -1,0 +1,9 @@
+TENSOR log_ratio 2 0 32 0
+
+TENSOR response_mask 2 0 32 0
+
+STR rollout_rs token_k1
+STR rollout_rs_threshold 0.5_1.8
+TENSOR ref_modified_response_mask 2 0 32 0
+
+NMETRICS 0

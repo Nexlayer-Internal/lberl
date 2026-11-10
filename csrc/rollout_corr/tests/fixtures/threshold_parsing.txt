@@ -1,0 +1,18 @@
+NUM_IS_CASES 4
+IS_THRESHOLD numeric 2.0 2.0 0 0.0
+IS_THRESHOLD string 2.5 2.5 0 0.0
+IS_THRESHOLD string 0.1_1.2 1.2 1 0.1
+IS_THRESHOLD string 1.0_1.0 1.0 1 1.0
+NUM_RS_CASES 5
+RS_THRESHOLD token_k1 0.5_2.0 1
+  token_k1 1 0.5 2.0
+RS_THRESHOLD token_k2 3.0 1
+  token_k2 0 0.0 3.0
+RS_THRESHOLD token_k1,seq_sum_k2 0.5_2.0,3.0 2
+  token_k1 1 0.5 2.0
+  seq_sum_k2 0 0.0 3.0
+RS_THRESHOLD seq_mean_k3,seq_max_k2 1.5 2
+  seq_mean_k3 0 0.0 1.5
+  seq_max_k2 0 0.0 1.5
+RS_THRESHOLD token_k1 2.0 1
+  token_k1 1 0.5 2.0
