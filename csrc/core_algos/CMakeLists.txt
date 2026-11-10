@@ -38,4 +38,14 @@ option(VERL_CORE_ALGOS_BUILD_TESTS "Build the core_algos C++ validation harness"
 if(VERL_CORE_ALGOS_BUILD_TESTS)
   add_executable(validate_core_algos tests/validate_core_algos.cpp)
   target_link_libraries(validate_core_algos PRIVATE verl_core_algos)
+
+  # CUDA-tensor smoke test for compute_grpo_outcome_advantage (regression
+  # test for the Tensor::accessor<T,N>() CPU-only segfault -- see
+  # tests/cuda_smoke_test.cpp's header comment and README.md). Builds fine
+  # against a CPU-only libtorch too (torch::cuda::is_available() just
+  # returns false and the test self-reports SKIP, exit code 77, rather than
+  # a false PASS) -- but only running it against a real CUDA-enabled
+  # libtorch + GPU actually exercises the fix.
+  add_executable(cuda_smoke_test tests/cuda_smoke_test.cpp)
+  target_link_libraries(cuda_smoke_test PRIVATE verl_core_algos)
 endif()
