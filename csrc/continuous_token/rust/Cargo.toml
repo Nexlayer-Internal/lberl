@@ -1,0 +1,43 @@
+[package]
+name = "verl_continuous_token_shim"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = """
+Rust FFI shim exposing exactly the HF `tokenizers` crate + chat-template
+rendering operations verl's single-turn, text-only Continuous Token prompt
+path needs. See ../README.md for scope, the chat-template-parity finding,
+and what was/wasn't verified.
+"""
+
+[lib]
+# staticlib: linked directly into the C++ validate_continuous_token harness
+# (and into any other C++ binary) via build.sh/CMakeLists.txt.
+# cdylib: kept too, for anyone who prefers dynamic linking; not what build.sh
+# links against by default.
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[dependencies]
+# Pinned to the exact version this repo's `transformers>=5.5.3,!=5.6.0,<5.13`
+# dependency chain resolves to today (see uv.lock: transformers==5.12.1 ->
+# tokenizers==0.22.2). This is the decision PLAN.md's table row #9b and the
+# human user already made: bind to HF's real tokenizers crate rather than
+# reimplementing BPE. See README.md's "Why this exact tokenizers version"
+# section for how this was confirmed, and what to do if the project's
+# tokenizers pin moves later.
+tokenizers = { version = "=0.22.2" }
+serde_json = "1"
+
+# Chat-template rendering: the tokenizers crate itself has ZERO chat-template
+# capability at 0.22.2 (confirmed empirically -- grepped the full sdist for
+# "jinja"/"minijinja"/"chat_template": zero hits). minijinja + minijinja-contrib
+# (pycompat) is a real, independently-maintained Jinja2-compatible engine (used
+# by other Rust LLM-serving projects for this exact purpose), not a hand-rolled
+# renderer. Its output was validated byte-for-byte against the real Python
+# Jinja2 path (via `transformers`) across 7 representative scenarios before
+# this crate was written -- see README.md's "Chat-template parity" section.
+minijinja = { version = "2", features = ["loop_controls", "multi_template", "unicode"] }
+minijinja-contrib = { version = "2", features = ["pycompat"] }
+
+[profile.release]
+panic = "unwind"

@@ -1,0 +1,6 @@
+/build/
+/cmake_build/
+/rust/target/
+# The real Qwen/Qwen3-4B tokenizer files (tokenizer.json is 11MB+ of binary
+# vocab/merges data) -- fetched by tests/fetch_tokenizer.sh, not committed.
+/tests/fixtures/qwen3_tokenizer/
